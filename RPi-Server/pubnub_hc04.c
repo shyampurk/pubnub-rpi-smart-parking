@@ -1,3 +1,4 @@
+//Import the Libraries Required 
 #include "pubnub_sync.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -8,6 +9,7 @@
 
 int uart0_filestream = -1;
 
+//UART Function to receive the data from the AVR Chip
 void uartInit(void)
 {
         uart0_filestream = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NDELAY);
@@ -26,6 +28,7 @@ void uartInit(void)
         tcsetattr(uart0_filestream,TCSANOW,&options);
 }
 
+//Function used to Publish the data to the PUBNUB 
 int pubnub_start(char *a)
 {
         enum pubnub_res res;
@@ -78,6 +81,7 @@ int pubnub_start(char *a)
         return 0;
 }
 
+//Main Function 
 int main()
 {
         uartInit();
@@ -89,6 +93,7 @@ int main()
         while(1)
         {
                 usleep(10000);
+                //Receive the data from the UART Rx
                 if (uart0_filestream != -1)
                 {
                         unsigned char rx_buffer[1];
@@ -108,6 +113,7 @@ int main()
                         status = atoi(rx_buffer);
                         printf("%d\n",status);
                 }
+                //Parking Lot 1
                 if(status < 4 && status != laststatus)
                 {
                         if(status == 1){
@@ -123,6 +129,7 @@ int main()
                         laststatus = status;
                         }
                 }
+                //Parking Lot 2
                 else if(status > 3 && status < 7 && status != laststatus1)
                 {
                         if(status == 4){
@@ -138,6 +145,7 @@ int main()
                         laststatus1 = status;
                         }
                 }
+                //Parking Lot 3
                 else if(status > 6 && status < 10 && status != laststatus2)
                 {
                         if(status == 7){
@@ -159,3 +167,4 @@ int main()
         return 0;
 }
 
+//End of the Program
