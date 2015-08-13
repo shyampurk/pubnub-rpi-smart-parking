@@ -1,6 +1,6 @@
 from pubnub import Pubnub
 
-pubnub = Pubnub(publish_key="pub-c-a1f796fb-1508-4c7e-9a28-9645035eee90", subscribe_key="sub-c-d4dd77a4-1e13-11e5-9dcf-0619f8945a4f")
+pubnub = Pubnub(publish_key="demo", subscribe_key="demo")
 
 def callback(message, channel):
     print(message)
