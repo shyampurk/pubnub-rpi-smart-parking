@@ -38,7 +38,7 @@ int pubnub_start(char *a)
                 printf("Failed to allocate Pubnub context!\n");
                 return -1;
         }
-        pubnub_init(pbp, "pub-c-a1f796fb-1508-4c7e-9a28-9645035eee90", "sub-c-d4dd77a4-1e13-11e5-9dcf-0619f8945a4f");
+        pubnub_init(pbp, "demo", "demo");
         if (0 != pubnub_generate_uuid_v4_random(&uuid))
         {
                 pubnub_set_uuid(pbp, "zeka-peka-iz-jendeka");
