@@ -1,5 +1,6 @@
 //Reference Value to Get The Status of Parking
-#define parked 150
+#define parked 200
+#define fault 4000
 
 //Pin Setting for the 3 Ultrasonic Sensors
 #define trigPin 13
@@ -79,46 +80,91 @@ void loop() {
   delay(200);
   //Parking Lot 1
   //Send the Sensor Status for the RPi using the Serial Communication 
-  if(distance <= parked)
+  if(distance < fault && distance2 < fault && distance3 < fault) 
   {
-    //This implies the Car is Parked and the Sensor Echo's for less distance
-    Serial.write('1');  
-  }
-  else if(distance < 0)
-  {
-    //This implies any Fault in the Sensor
-    Serial.write('2');
-  }
-  else
-  {
-    //This imples the Parking Lot is Free
-    Serial.write('3');
-  }
-  //Parking Lot 2
-  if(distance2 <= parked)
-  {
-    Serial.write('4');
-  }
-  else if(distance2 < 0)
-  {
-    Serial.write('5');
-  }
-  else
-  {
-    Serial.write('6');
-  }
-  //Parking Lot 3
-  if(distance3 <= parked)
-  {
-    Serial.write('7');
-  }
-  else if(distance3 < 0)
-  {
-    Serial.write('8');
+          if(distance <= parked && distance2 <= parked && distance3 <= parked)
+          {
+            Serial.write("01");
+          }
+          else if(distance <= parked && distance2 <= parked && distance3 > parked)
+          {
+            Serial.write("02");
+          }
+          else if(distance <= parked && distance2 > parked && distance3 <= parked)
+          {
+            Serial.write("03");
+          }
+          else if(distance <= parked && distance2 > parked && distance3 > parked)
+          {
+            Serial.write("04");
+          }
+          else if(distance > parked && distance2 <= parked && distance3 <= parked)
+          {
+            Serial.write("05");
+          }
+          else if(distance > parked && distance2 <= parked && distance3 > parked)
+          {
+            Serial.write("06");
+          }
+          else if(distance > parked && distance2 > parked && distance3 <= parked)
+          {
+            Serial.write("07");
+          }
+          else if(distance > parked && distance2 > parked && distance3 > parked)
+          {
+            Serial.write("08");
+          }
   }
   else
   {
-    Serial.write('9');
+          if(distance > fault && distance2 <= parked && distance3 <= parked)
+          {
+            Serial.write("09");
+          }
+          else if(distance > fault && distance2 <= parked && distance3 > parked)
+          {
+            Serial.write("10");
+          }
+          else if(distance > fault && distance2 > parked && distance3 <= parked)
+          {
+            Serial.write("11");
+          }
+          else if(distance > fault && distance2 > parked && distance3 > parked)
+          {
+            Serial.write("12");
+          }
+          else if(distance <= parked && distance2 > fault && distance3 <= parked)
+          {
+            Serial.write("13");
+          }
+          else if(distance <= parked && distance2 > fault && distance3 > parked)
+          {
+            Serial.write("14");
+          }
+          else if(distance > parked && distance2 > fault && distance3 <= parked)
+          {
+            Serial.write("15");
+          }
+          else if(distance > parked && distance2 > fault && distance3 > parked)
+          {
+            Serial.write("16");
+          }
+          else if(distance <= parked && distance2 <= parked && distance3 > fault)
+          {
+            Serial.write("17");
+          }
+          else if(distance <= parked && distance2 > parked && distance3 > fault)
+          {
+            Serial.write("18");
+          }
+          else if(distance > parked && distance2 <= parked && distance3 > fault)
+          {
+            Serial.write("19");
+          }
+          else if(distance > parked && distance2 > parked && distance3 > fault)
+          {
+            Serial.write("20");
+          }
   }
   delay(5000);
 }
