@@ -165,6 +165,34 @@ void loop() {
           {
             Serial.write("20");
           }
+            else if(distance > fault && distance2 > fault && distance3 <= parked)
+          {
+            Serial.write("21");
+          }
+          else if(distance > fault && distance2 > fault && distance3 > parked)
+          {
+            Serial.write("22");
+          }
+          else if(distance <= parked && distance2 > fault && distance3 > fault)
+          {
+            Serial.write("23");
+          }
+          else if(distance > parked && distance2 > fault && distance3 > fault)
+          {
+            Serial.write("24");
+          }
+          else if(distance > fault && distance2 <= parked && distance3 >fault)
+          {
+            Serial.write("25");
+          }
+          else if(distance > fault && distance2 > parked && distance3 >fault)
+          {
+            Serial.write("26");
+          }
+          else if(distance > fault && distance2 > fault && distance3 > fault)
+          {
+            Serial.write("27");
+          }
   }
   delay(5000);
 }
