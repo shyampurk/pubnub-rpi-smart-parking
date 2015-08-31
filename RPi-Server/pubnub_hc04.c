@@ -78,7 +78,7 @@ void *pubnub_receive(void* p_unused)
 	char const *l_requestChannel = "parkingstatus-req";
 	pubnub_t *l_receive = pubnub_alloc();
 	while(1)
-    {
+    	{
 	    if (NULL == l_receive) 
 	    {
 	        printf("Failed to allocate Pubnub context!\n");
@@ -116,7 +116,7 @@ void *pubnub_receive(void* p_unused)
 	        printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
 	        pubnub_free(l_receive);
 	        return (void *)-1;
-	    }
+	    	}
 		
 		l_res = pubnub_await(l_receive);
 		if (l_res == PNR_STARTED) 
