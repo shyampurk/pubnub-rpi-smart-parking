@@ -1,5 +1,7 @@
+/*********************************************************************************
+SMART PARKING LOT SYSTEM
+*********************************************************************************/
 //Import the Libraries Required 
-#include "pubnub_sync.h" 
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <string.h> 
@@ -7,273 +9,310 @@
 #include <fcntl.h> 
 #include <termios.h> 
 #include <pthread.h>
+#include "pubnub_sync.h"
 
-int uart0_filestream = -1;
-int AppData;
+//Individual Parking ID's for the Parking LOT's 
+const char *g_lot1 = "001";
+const char *g_lot2 = "002";
+const char *g_lot3 = "003";
 
-//UART Function to receive the data from the AVR Chip
-void uartInit(void)
+/*Characted String used to form the json data to be sent 
+to the app using json_data function */
+char g_jsonResponse[26] = "";
+
+int g_uart0_filestream = -1;
+int g_firstChar = 0,g_secondChar = 0,g_thirdChar = 0;
+
+//Function Prototypes used in this program
+void *pubnub_receive(void* p_unused);
+void prepare_json_data(int p_status1,int p_status2,int p_status3);
+int pubnub_send(char *p_data);
+
+/*********************************************************************************
+
+Function Name 		:	uartInit
+Description			:	Initialize the UART Serial Communication between the 
+						Raspberry Pi and the Atmega 8a Microcontroller
+Parameters 			:	void
+Return 				:	int - when uart connection fails returns -1 else 0
+
+*********************************************************************************/
+
+int uartInit(void)
 {
-	uart0_filestream = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NDELAY);
-	if(uart0_filestream == -1)
+	g_uart0_filestream = open("/dev/ttyAMA0", O_RDWR | O_NOCTTY | O_NDELAY);
+	if(g_uart0_filestream == -1)
 	{
 		printf("Error Connecting with the Device \n");
+		return -1;
 	}
-
+	//Setting the Baud Rate and No. of the Stop Bits for the UART
 	struct termios options;
-	tcgetattr(uart0_filestream,&options);
+	tcgetattr(g_uart0_filestream,&options);
+	//BAUD Rate Initialized to 9600 bps
 	options.c_cflag = B9600 | CS8 | CLOCAL | CREAD;
 	options.c_iflag = IGNPAR;
 	options.c_oflag = 0;
 	options.c_lflag = 0;
-	tcflush(uart0_filestream, TCIFLUSH);
-	tcsetattr(uart0_filestream,TCSANOW,&options);
+	tcflush(g_uart0_filestream, TCIFLUSH);
+	tcsetattr(g_uart0_filestream,TCSANOW,&options);
+	return 0;
 }
 
-void* pubnub_receive(void* unused)
-{
-	char const *msg;
-        enum pubnub_res res;
-        char const *chan = "parkingstatus-req";
-        pubnub_t *pbp = pubnub_alloc();
-        if (NULL == pbp) 
-        {
-                printf("Failed to allocate Pubnub context!\n");
-                return NULL;
-        }
-        pubnub_init(pbp, "demo", "demo");
+/*********************************************************************************
 
-	puts("Subscribing...");
-	res = pubnub_subscribe(pbp, chan, NULL);
-    	if (res != PNR_STARTED) {
-        printf("pubnub_subscribe() returned unexpected: %d\n", res);
-        pubnub_free(pbp);
-        return NULL;
-    	}
-    	res = pubnub_await(pbp);
-    	if (res == PNR_STARTED) {
-        printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", res);
-        pubnub_free(pbp);
-        return NULL;
-	}
-	if (PNR_OK == res) {
-        puts("Subscribed!");
-    	}
-    	else {
-        printf("Subscribing failed with code: %d\n", res);
-    	}
-	res = pubnub_subscribe(pbp, chan, NULL);
-	if (res != PNR_STARTED) {
-        printf("pubnub_subscribe() returned unexpected: %d\n", res);
-        pubnub_free(pbp);
-        return NULL;
-    	}
-	res = pubnub_await(pbp);
-	if (res == PNR_STARTED) {
-        printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", res);
-        pubnub_free(pbp);
-        return NULL;
-  	}
-	if (PNR_OK == res) {
-        puts("Subscribed! Got messages:");
-        for (;;) {
-            msg = pubnub_get(pbp);
-            if (NULL == msg) {
-                break;
-            }
-            puts(msg);
-	    printf("%c",msg[48]);
-	    if(msg[48] == '4')
+Function Name 		:	pubnub_receive
+Description			:	Suscribe from the "parkingstatus-req" channel using the 
+						pubnub and The Request is sent fromt the Android App to 
+						get the present status of the parking lots.
+						This is seperate thread along with the main thread.
+Parameters 			:	void
+Return 				:	(void *) when the pubnub connection fails returns -1
+
+*********************************************************************************/
+
+void *pubnub_receive(void* p_unused)
+{
+	char const *l_msg = NULL;
+	enum pubnub_res l_res;
+	char const *l_requestChannel = "parkingstatus-req";
+	pubnub_t *l_receive = pubnub_alloc();
+	while(1)
+    {
+	    if (NULL == l_receive) 
 	    {
-		AppData = 1;
-	        printf("%d",AppData);
+	        printf("Failed to allocate Pubnub context!\n");
+	        return (void *)-1;
 	    }
-	  }
-    	}
-    	else {
-        		printf("Subscribing failed with code: %d\n", res);
-    	} 
-	pthread_exit(NULL);
+	    pubnub_init(l_receive, "demo", "demo");
+		puts("Subscribing...");
+		l_res = pubnub_subscribe(l_receive, l_requestChannel, NULL);
+		
+		if (l_res != PNR_STARTED) 
+		{
+	    	printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
+	    	pubnub_free(l_receive);
+	    	return (void *)-1;
+		}
+
+		l_res = pubnub_await(l_receive);
+		if (l_res == PNR_STARTED) 
+		{
+	    	printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_res);
+	    	pubnub_free(l_receive);
+	    	return (void *)-1;
+		}
+		if (PNR_OK == l_res) 
+		{
+	    	puts("Subscribed!");
+		}
+		else 
+		{
+	    	printf("Subscribing failed with code: %d\n", l_res);
+		}
+		l_res = pubnub_subscribe(l_receive, l_requestChannel, NULL);
+		if (l_res != PNR_STARTED) 
+		{
+	        printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
+	        pubnub_free(l_receive);
+	        return (void *)-1;
+	    }
+		
+		l_res = pubnub_await(l_receive);
+		if (l_res == PNR_STARTED) 
+		{
+	        printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_res);
+	        pubnub_free(l_receive);
+	        return (void *)-1;
+	  	}
+		if (PNR_OK == l_res) 
+		{
+	        puts("Subscribed! Got messages:");
+	        for (;;) 
+	        {
+	            l_msg = pubnub_get(l_receive);
+	            if (NULL == l_msg) 
+	            {
+	                break;
+	            }
+	            puts(l_msg);
+		    	
+		    	if(l_msg[48] == '4')
+		    	{
+				    pubnub_send(g_jsonResponse);
+				    memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
+		    	}
+		  	}
+	    }
+	    else 
+	    {
+	    	printf("Subscribing failed with code: %d\n", l_res);
+	    } 
+	}
+	pubnub_free(l_receive);
+    return NULL;
 }
 
-//Function used to Publish the data to the PUBNUB 
-int pubnub_start(char *a)
+/*********************************************************************************
+
+Function Name 		:	pubnub_send
+Description			:	Publish the present status of the parking lots to the 
+						Requested App
+Parameters 			:	p_data
+			p_data  :	Parameter is the char pointer holds the data has to be 
+						sent to the Requested App
+Return 				:	int, if error in sent thr function returns -1 else 0
+
+*********************************************************************************/
+
+int pubnub_send(char *p_data)
 {
-	enum pubnub_res res;
-	char const *chan = "parkingstatus-resp";
-	pubnub_t *pbp2 = pubnub_alloc();
+	enum pubnub_res l_response;
+	char const *l_responseChannel = "parkingstatus-resp";
 	struct Pubnub_UUID uuid;
 	struct Pubnub_UUID_String str_uuid;
-	if (NULL == pbp2) 
+	pubnub_t *l_publish = pubnub_alloc();
+	if (NULL == l_publish) 
 	{
 		printf("Failed to allocate Pubnub context!\n");
 		return -1;
 	}
-	pubnub_init(pbp2, "demo", "demo");
+	pubnub_init(l_publish, "demo", "demo");
 
 	if (0 != pubnub_generate_uuid_v4_random(&uuid)) 
 	{
-		pubnub_set_uuid(pbp2, "zeka-peka-iz-jendeka");
+		pubnub_set_uuid(l_publish, "zeka-peka-iz-jendeka");
 	}
 	else 
 	{
 		str_uuid = pubnub_uuid_to_string(&uuid);
-		pubnub_set_uuid(pbp2, str_uuid.uuid);
+		pubnub_set_uuid(l_publish, str_uuid.uuid);
 		printf("Generated UUID: %s\n", str_uuid.uuid);
 	}
 
-	pubnub_set_auth(pbp2, "danaske");
+	pubnub_set_auth(l_publish, "danaske");
 	puts("Publishing...");
-	res = pubnub_publish(pbp2, chan, a);
-	if(res != PNR_STARTED) 
+	l_response = pubnub_publish(l_publish, l_responseChannel, p_data);
+	if(l_response != PNR_STARTED) 
 	{
-		printf("pubnub_publish() returned unexpected: %d\n", res);
-		pubnub_free(pbp2);
+		printf("pubnub_publish() returned unexpected: %d\n", l_response);
+		pubnub_free(l_publish);
 		return -1;
 	}
-	res = pubnub_await(pbp2);
-	if (res == PNR_STARTED) 
+	l_response = pubnub_await(l_publish);
+	if (l_response == PNR_STARTED) 
 	{
-		printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", res);
-		pubnub_free(pbp2);
+		printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_response);
+		pubnub_free(l_publish);
 		return -1;
 	}
-	if (PNR_OK == res) {
-	printf("Published! Response from Pubnub: %s\n", pubnub_last_publish_result(pbp2));
+	if (PNR_OK == l_response) {
+	printf("Published! Response from Pubnub: %s\n", pubnub_last_publish_result(l_publish));
+	return 0;
 	}
-	else if (PNR_PUBLISH_FAILED == res) {
-	printf("Published failed on Pubnub, description: %s\n", pubnub_last_publish_result(pbp2));
+	else if (PNR_PUBLISH_FAILED == l_response) {
+	printf("Published failed on Pubnub, description: %s\n", pubnub_last_publish_result(l_publish));
 	}
 	else {
-	printf("Publishing failed with code: %d\n", res);
+	printf("Publishing failed with code: %d\n", l_response);
 	}
+	pubnub_free(l_publish);
 	return 0;
 }
 
-//Main Function 
-int main()
+/*********************************************************************************
+
+Function Name 		:	prepare_json_data
+Description			:	With the Present Status of the Parking Lots 
+						this function makes a json data to be sent as Response
+Parameters 			:	p_status1,p_status2,p_status3
+		p_status1	:	Status of the first Parking Lot
+		p_status2	:	Status of the second Parking Lot
+		p_status3	:	Status of the third Parking Lot
+Return 				:	void
+
+*********************************************************************************/
+
+void prepare_json_data(int p_status1,int p_status2,int p_status3)
 {
-        pthread_t thread_id;
-	uartInit();
-	int status = 0;
-	int laststatus = 0;
-	pthread_create(&thread_id,NULL,&pubnub_receive,NULL);
-        while(1)
-        {
-                up: usleep(10000);
-                //Receive the data from the UART Rx
-                if (uart0_filestream != -1)
-		{
-			unsigned char rx_buffer[2];
-			int rx_length = read(uart0_filestream,(void*)rx_buffer, 2);
-			int x,y;
-			if (rx_length < 0)
+	memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
+	char l_buf [2] = "";
+	strcat(g_jsonResponse,"{\"");
+	strcat(g_jsonResponse,g_lot1);
+	strcat(g_jsonResponse,"\":");
+	snprintf(l_buf,sizeof(l_buf),"%d",p_status1);
+	strcat(g_jsonResponse,l_buf);
+	strcat(g_jsonResponse,",\"");
+	strcat(g_jsonResponse,g_lot2);
+	strcat(g_jsonResponse,"\":");
+	snprintf(l_buf,sizeof(l_buf),"%d",p_status2);	
+	strcat(g_jsonResponse,l_buf);
+	strcat(g_jsonResponse,",\"");
+	strcat(g_jsonResponse,g_lot3);
+	strcat(g_jsonResponse,"\":");
+	snprintf(l_buf,sizeof(l_buf),"%d",p_status3);	
+	strcat(g_jsonResponse,l_buf);
+	strcat(g_jsonResponse,"}");
+}
+
+/*********************************************************************************
+
+Function Name 		:	main
+Description			:	Initalize UART, Thread and publish if any status change
+						in the parking lots
+Parameters 			:	void
+Return 				:	int, if error in the function returns -1 else 0
+
+*********************************************************************************/
+
+int main(void)
+{
+	pthread_t thread_id;
+	if(uartInit() == 0){
+		pthread_create(&thread_id,NULL,&pubnub_receive,NULL);
+		long l_laststatus = 0;
+		long l_status = 0;
+		while(1)
+	    {
+			if (g_uart0_filestream != -1)
 			{
+				char *l_ptr = NULL;
+				char l_rxBuffer[4];
+				int l_rxLength = read(g_uart0_filestream,(void*)l_rxBuffer, 4);
+				if (l_rxLength > 0)
+				{
+					l_rxBuffer[l_rxLength] = '\0';
+				}
+				/*DATA RECEIVED by UART is 1,2,3
+					1	-	Parking LOT is Free
+					2	-	Parking LOT is Filled
+					3	-	Fault in the Sensor	*/
+				g_firstChar  = l_rxBuffer[0] - '0';
+				g_secondChar = l_rxBuffer[1] - '0';
+				g_thirdChar  = l_rxBuffer[2] - '0';
+				l_status = strtol(l_rxBuffer,&l_ptr,10);
+				printf("%ld\n",l_status);
+				/*DATA SENT to the APP is Modified to 0,1,2
+					0	-	Parking LOT is Free
+					1	-	Parking LOT is Filled
+					2	-	Fault in the Sensor */
+				prepare_json_data(g_firstChar-1,g_secondChar-1,g_thirdChar-1);
 			}
-			else if (rx_length == 0)
+			if(l_status != l_laststatus)
 			{
-				//No data waiting
+				l_laststatus = l_status;
+				pubnub_send(g_jsonResponse);
+				memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
 			}
-			else
-			{
-				rx_buffer[rx_length] = '\0';
-			}
-			y = rx_buffer[0] - 48;
-			x = rx_buffer[1] - 48;
-			status = (y*10)+x;
-			printf("%d\n",status);
+	        usleep(5000000);
 		}
-		if(AppData == 1 || status != laststatus)
-		{
-			AppData = 0;
-			laststatus = status;
-			if(status == 1){
-			pubnub_start("{\"001\":1,\"002\":1,\"003\":1}");
-			}
-			else if(status == 2){
-			pubnub_start("{\"001\":1,\"002\":1,\"003\":0}");
-			}
-			else if (status == 3){
-			pubnub_start("{\"001\":1,\"002\":0,\"003\":1}");
-			}
-			else if(status == 4){
-			pubnub_start("{\"001\":1,\"002\":0,\"003\":0}");
-			}
-			else if(status == 5){
-			pubnub_start("{\"001\":0,\"002\":1,\"003\":1}");
-			}
-			else if(status == 6){
-			pubnub_start("{\"001\":0,\"002\":1,\"003\":0}");
-			}
-			else if(status == 7){
-			pubnub_start("{\"001\":0,\"002\":0,\"003\":1}");
-			}
-			else if(status == 8){
-			pubnub_start("{\"001\":0,\"002\":0,\"003\":0}");
-			}
-			else if(status == 9){
-			pubnub_start("{\"001\":2,\"002\":1,\"003\":1}");
-			}
-			else if (status == 10){
-			pubnub_start("{\"001\":2,\"002\":1,\"003\":0}");
-			}
-			else if(status == 11){
-			pubnub_start("{\"001\":2,\"002\":0,\"003\":1}");
-			}
-			else if(status == 12){
-			pubnub_start("{\"001\":2,\"002\":0,\"003\":0}");
-			}
-			else if(status == 13){
-			pubnub_start("{\"001\":1,\"002\":2,\"003\":1}");
-			}
-			else if(status == 14){
-			pubnub_start("{\"001\":1,\"002\":2,\"003\":0}");
-			}
-			else if(status == 15){
-			pubnub_start("{\"001\":0,\"002\":2,\"003\":1}");
-			}
-			else if(status == 16){
-			pubnub_start("{\"001\":0,\"002\":2,\"003\":0}");
-			}
-			else if(status == 17){
-			pubnub_start("{\"001\":1,\"002\":1,\"003\":2}");
-			}
-			else if(status == 18){
-			pubnub_start("{\"001\":1,\"002\":0,\"003\":2}");
-			}
-			else if(status == 19){
-			pubnub_start("{\"001\":0,\"002\":1,\"003\":2}");
-			}
-			else if(status == 20){
-			pubnub_start("{\"001\":0,\"002\":0,\"003\":2}");
-			}
-			else if(status == 21){
-			pubnub_start("{\"001\":2,\"002\":2,\"003\":1}");
-			}
-			else if(status == 22){
-			pubnub_start("{\"001\":2,\"002\":2,\"003\":0}");
-			}
-			else if(status == 23){
-			pubnub_start("{\"001\":1,\"002\":2,\"003\":2}");
-			}
-			else if(status == 24){
-			pubnub_start("{\"001\":0,\"002\":2,\"003\":2}");
-			}
-			else if(status == 25){
-			pubnub_start("{\"001\":2,\"002\":1,\"003\":2}");
-			}
-			else if(status == 26){
-			pubnub_start("{\"001\":2,\"002\":0,\"003\":2}");
-			}
-			else if(status == 27){
-			pubnub_start("{\"001\":2,\"002\":2,\"003\":2}");
-			}
-			else goto up;
-			pthread_create(&thread_id,NULL,&pubnub_receive,NULL);			
-		}
-	usleep(500000);
-      	}
-        close(uart0_filestream);
+	    close(g_uart0_filestream);
+	}
+	else
+	{
+		printf("UART Initialization Failed, Aborting");
+		return -1;
+	}
 	pthread_exit(NULL);
 	return 0;
 }
