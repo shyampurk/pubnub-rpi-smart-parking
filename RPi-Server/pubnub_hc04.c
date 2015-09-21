@@ -28,15 +28,15 @@ void *pubnub_receive(void* p_unused);
 void prepare_json_data(int p_status1,int p_status2,int p_status3);
 int pubnub_send(char *p_data);
 
-/*********************************************************************************
+/**************************************************************************************
 
 Function Name 		:	uartInit
-Description			:	Initialize the UART Serial Communication between the 
-						Raspberry Pi and the Atmega 8a Microcontroller
-Parameters 			:	void
-Return 				:	int - when uart connection fails returns -1 else 0
+Description		:	Initialize the UART Serial Communication between the 
+				Raspberry Pi and the Atmega 8a Microcontroller
+Parameters 		:	void
+Return 			:	int - when uart connection fails returns -1 else 0
 
-*********************************************************************************/
+**************************************************************************************/
 
 int uartInit(void)
 {
@@ -59,17 +59,17 @@ int uartInit(void)
 	return 0;
 }
 
-/*********************************************************************************
+/*****************************************************************************************
 
 Function Name 		:	pubnub_receive
-Description			:	Suscribe from the "parkingstatus-req" channel using the 
-						pubnub and The Request is sent fromt the Android App to 
-						get the present status of the parking lots.
-						This is seperate thread along with the main thread.
-Parameters 			:	void
-Return 				:	(void *) when the pubnub connection fails returns -1
+Description		:	Suscribe from the "parkingstatus-req" channel using the 
+				pubnub and The Request is sent fromt the Android App to 
+				get the present status of the parking lots.
+				This is seperate thread along with the main thread.
+Parameters 		:	void
+Return 			:	(void *) when the pubnub connection fails returns -1
 
-*********************************************************************************/
+****************************************************************************************/
 
 void *pubnub_receive(void* p_unused)
 {
@@ -153,17 +153,17 @@ void *pubnub_receive(void* p_unused)
     return NULL;
 }
 
-/*********************************************************************************
+/******************************************************************************************
 
 Function Name 		:	pubnub_send
-Description			:	Publish the present status of the parking lots to the 
-						Requested App
-Parameters 			:	p_data
-			p_data  :	Parameter is the char pointer holds the data has to be 
-						sent to the Requested App
-Return 				:	int, if error in sent thr function returns -1 else 0
+Description		:	Publish the present status of the parking lots to the 
+				Requested App
+Parameters 		:	p_data
+		p_data  :	Parameter is the char pointer holds the data has to be 
+				sent to the Requested App
+Return 			:	int, if error in sent thr function returns -1 else 0
 
-*********************************************************************************/
+*****************************************************************************************/
 
 int pubnub_send(char *p_data)
 {
@@ -220,18 +220,18 @@ int pubnub_send(char *p_data)
 	return 0;
 }
 
-/*********************************************************************************
+/***************************************************************************************
 
 Function Name 		:	prepare_json_data
-Description			:	With the Present Status of the Parking Lots 
-						this function makes a json data to be sent as Response
-Parameters 			:	p_status1,p_status2,p_status3
-		p_status1	:	Status of the first Parking Lot
-		p_status2	:	Status of the second Parking Lot
-		p_status3	:	Status of the third Parking Lot
-Return 				:	void
+Description		:	With the Present Status of the Parking Lots 
+				this function makes a json data to be sent as Response
+Parameters 		:	p_status1,p_status2,p_status3
+	p_status1	:	Status of the first Parking Lot
+	p_status2	:	Status of the second Parking Lot
+	p_status3	:	Status of the third Parking Lot
+Return 			:	void
 
-*********************************************************************************/
+***************************************************************************************/
 
 void prepare_json_data(int p_status1,int p_status2,int p_status3)
 {
@@ -255,15 +255,15 @@ void prepare_json_data(int p_status1,int p_status2,int p_status3)
 	strcat(g_jsonResponse,"}");
 }
 
-/*********************************************************************************
+/****************************************************************************************
 
 Function Name 		:	main
-Description			:	Initalize UART, Thread and publish if any status change
-						in the parking lots
-Parameters 			:	void
-Return 				:	int, if error in the function returns -1 else 0
+Description		:	Initalize UART, Thread and publish if any status change
+				in the parking lots
+Parameters 		:	void
+Return 			:	int, if error in the function returns -1 else 0
 
-*********************************************************************************/
+****************************************************************************************/
 
 int main(void)
 {
