@@ -12,6 +12,11 @@ var app = {
     },
     onDeviceReady: function() {
         app.receivedEvent('deviceready');
+        $.mobile.loading( "show", {
+                        text: "Fetching Current Status",
+                        textVisible: true,
+                        textonly: false            
+            });   
     },
     // Update DOM on a Received Event
     receivedEvent: function(id) {
@@ -29,7 +34,7 @@ var app = {
         pubnub.subscribe({
             channel: "parkingstatus-resp",
             message: function(message, env, ch, timer, magic_ch) {
-
+                 $.mobile.loading( "hide" );
                 var currentStatus = Object.keys(message).reverse().map(function(key) {
                     return codeColor[message[key]]
                 })
