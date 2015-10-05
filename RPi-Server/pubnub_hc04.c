@@ -77,80 +77,79 @@ void *pubnub_receive(void* p_unused)
 	enum pubnub_res l_res;
 	char const *l_requestChannel = "parkingstatus-req";
 	pubnub_t *l_receive = pubnub_alloc();
+	if (NULL == l_receive) 
+	{
+		printf("Failed to allocate Pubnub context!\n");
+		return (void *)-1;
+	}
+	pubnub_init(l_receive, "demo", "demo");
 	while(1)
     	{
-	    if (NULL == l_receive) 
-	    {
-	        printf("Failed to allocate Pubnub context!\n");
-	        return (void *)-1;
-	    }
-	    pubnub_init(l_receive, "demo", "demo");
-		puts("Subscribing...");
+		//puts("Subscribing...");
 		l_res = pubnub_subscribe(l_receive, l_requestChannel, NULL);
 		
 		if (l_res != PNR_STARTED) 
 		{
-	    	printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
-	    	pubnub_free(l_receive);
-	    	return (void *)-1;
+	    		printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
+	    		pubnub_free(l_receive);
+	    		return (void *)-1;
 		}
 
 		l_res = pubnub_await(l_receive);
 		if (l_res == PNR_STARTED) 
 		{
-	    	printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_res);
-	    	pubnub_free(l_receive);
-	    	return (void *)-1;
+	    		printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_res);
+	    		pubnub_free(l_receive);
+	    		return (void *)-1;
 		}
 		if (PNR_OK == l_res) 
 		{
-	    	puts("Subscribed!");
+	    		puts("Subscribed!");
 		}
 		else 
 		{
-	    	printf("Subscribing failed with code: %d\n", l_res);
+	    		printf("Subscribing failed with code: %d\n", l_res);
 		}
 		l_res = pubnub_subscribe(l_receive, l_requestChannel, NULL);
 		if (l_res != PNR_STARTED) 
 		{
-	        printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
-	        pubnub_free(l_receive);
-	        return (void *)-1;
+	        	printf("pubnub_subscribe() returned unexpected: %d\n", l_res);
+	        	pubnub_free(l_receive);
+	        	return (void *)-1;
 	    	}
 		
 		l_res = pubnub_await(l_receive);
 		if (l_res == PNR_STARTED) 
 		{
-	        printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_res);
-	        pubnub_free(l_receive);
-	        return (void *)-1;
+	        	printf("pubnub_await() returned unexpected: PNR_STARTED(%d)\n", l_res);
+	        	pubnub_free(l_receive);
+	        	return (void *)-1;
 	  	}
 		if (PNR_OK == l_res) 
 		{
-	        puts("Subscribed! Got messages:");
-	        for (;;) 
-	        {
-	            l_msg = pubnub_get(l_receive);
-	            if (NULL == l_msg) 
-	            {
-	                break;
-	            }
-	            puts(l_msg);
-		    	
-		    	if(l_msg[48] == '4')
-		    	{
-				    pubnub_send(g_jsonResponse);
-				    memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
-		    	}
+	        	puts("Subscribed! Got messages:");
+		        for (;;) 
+		        {
+		        	l_msg = pubnub_get(l_receive);
+		            	if (NULL == l_msg) 
+		            	{
+		                	break;
+		            	}
+		            	puts(l_msg);
+			    	if(l_msg[48] == '4')
+			    	{
+					    pubnub_send(g_jsonResponse);
+					    memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
+			    	}
 		  	}
-	    }
-	    else 
-	    {
-	    	printf("Subscribing failed with code: %d\n", l_res);
-	    } 
+	    	}
+	    	else 
+	    	{
+	    		printf("Subscribing failed with code: %d\n", l_res);
+	    	} 
 	}
 	pubnub_free(l_receive);
-    return NULL;
+    	return NULL;
 }
 
 /******************************************************************************************
@@ -268,12 +267,13 @@ Return 			:	int, if error in the function returns -1 else 0
 int main(void)
 {
 	pthread_t thread_id;
-	if(uartInit() == 0){
+	if(uartInit() == 0)
+	{
 		pthread_create(&thread_id,NULL,&pubnub_receive,NULL);
 		long l_laststatus = 0;
 		long l_status = 0;
 		while(1)
-	    {
+	    	{
 			if (g_uart0_filestream != -1)
 			{
 				char *l_ptr = NULL;
@@ -304,9 +304,9 @@ int main(void)
 				pubnub_send(g_jsonResponse);
 				memset(g_jsonResponse, 0, sizeof(g_jsonResponse));
 			}
-	        usleep(5000000);
+	        	usleep(5000000);
 		}
-	    close(g_uart0_filestream);
+	    	close(g_uart0_filestream);
 	}
 	else
 	{
