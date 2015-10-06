@@ -15,8 +15,7 @@ LDFLAGS = -lpthread -lrt
 all: pubnub_hc04 
 
 pubnub_hc04: RPi-Server/pubnub_hc04.c $(SOURCEFILES) c-core/core/pubnub_ntf_sync.c
-	$(CC) -o $@ $(CFLAGS) -D VERBOSE_DEBUG RPi-Server/pubnub_hc04.c c-core/core/pubnub_ntf_sync.c
- $(SOURCEFILES) $(LDFLAGS) 
+	$(CC) -o $@ $(CFLAGS) -D VERBOSE_DEBUG RPi-Server/pubnub_hc04.c c-core/core/pubnub_ntf_sync.c $(SOURCEFILES) $(LDFLAGS) 
 
 clean:
 	rm pubnub_hc04 
