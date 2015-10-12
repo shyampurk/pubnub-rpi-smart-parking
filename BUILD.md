@@ -8,52 +8,55 @@
 
 ##UART CONFIGURATION ON RASPBERRY Pi
 
-1. Configure UART or Raspberry Pi ( Optional step, not required for latest raspbian version 4.1 + )
+Step 1: Configure UART or Raspberry Pi ( Optional step, not required for latest raspbian version 4.1 + )
 
 Edit /etc/inittab .This file has the command to enable the login prompt and this needs to be disabled. 
 If you do not find this file and your raspbian kernel version is 4.1+ then you can ignore this step. Else follow the steps below
 
- a) To edit the file run, nano /etc/inittab
+ a) To edit the file run, 
+ 
+ 		nano /etc/inittab
 
  b) Move to the end of the file until you find
 
-T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+		T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
 
 Disable it by adding a # character to the beginning. Save the file.
 
-#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
+		#T0:23:respawn:/sbin/getty -L ttyAMA0 115200 vt100
 
 
-2. Edit /boot/cmdline.txt to avoid the bootup information which is sent to the Serial port during the Raspberry Pi Boot up by disabling it
+Step 2: Edit /boot/cmdline.txt to avoid the bootup information which is sent to the Serial port during the Raspberry Pi Boot up by disabling it
 
-To edit the file run, nano /boot/cmdline.txt
+To edit the file run, 
+
+		nano /boot/cmdline.txt
 
 The contents of the file look like this:
 
-dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+		dwc_otg.lpm_enable=0 console=ttyAMA0,115200 kgdboc=ttyAMA0,115200 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
 
 Remove all references to ttyAMA0 (which is the name of the serial port). 
 
 The file will now look like this:
 
-dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
+		dwc_otg.lpm_enable=0 console=tty1 root=/dev/mmcblk0p2 rootfstype=ext4 elevator=deadline rootwait
 
 
-3. Reboot the Raspberry Pi
+Step 3: Reboot the Raspberry Pi
 
 In order you enable the changes you have made, you will need to reboot the Raspberry Pi
 
 		sudo shutdown -r now 
 
 
-4. Install the minicom to the Raspberry Pi to ensure that the uart is ready to used 
-		 by the Programming
+Step 4: Install the minicom to the Raspberry Pi to ensure that the uart is ready to used by the program
 
 To install the minicom, just run
 	
 		sudo apt-get install minicom
 
-5. Once installation is done , perform the following operation to verify UART communication
+Step 5: Once installation is done , perform the following operation to verify UART communication
 
 Connect your PC to the Raspberry Pi serial port using an appropriate serial port adapter and wiring, then open Putty or a similar serial terminal program on PC side. Setup a connection using the serial port at 9600 baud.
 
