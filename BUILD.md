@@ -5,6 +5,7 @@
 1. POSIX build setup is expected to be available either on Raspberry Pi directly or on a linux build server.
 2. Arduino IDE should be installed for building the sensor controller to be executed in ATMega8.
 3. Cordova should be installed on the build system for building the mobile app. Also Android 21 needs to be installed from Android package installer.
+4. For Raspberry Pi UART configuration,  user should have root privileges
 
 ##UART CONFIGURATION ON RASPBERRY Pi
 
