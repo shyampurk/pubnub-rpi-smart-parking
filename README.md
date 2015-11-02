@@ -11,9 +11,9 @@ Refer [Circuit Diagram](schematic.png)
 
 The application has three parts
 
-1) RPi-Server - This is the master controller module which runs on raspberry pi. It periodically get the status of parking slots within its jurisdiction, via UART communication from ATMega8.
+1) Master Controller / RPi-Server - This is the master controller module which runs on raspberry pi (model b+). It periodically get the status of parking slots within its jurisdiction, via UART communication from ATMega8.
 
-2) Device - This is the sensor controller module which runs on ATMega8. The ATMega8 directly interfaces with ultrasonic sensors to detect the presence or absence of a vehicle in a parking slot and updates this status periodically to master controller.
+2) Device Controller - This is the sensor controller module which runs on ATMega8. The ATMega8 directly interfaces with ultrasonic sensors to detect the presence or absence of a vehicle in a parking slot and updates this status periodically to master controller.
 
 3) Mobile App - This is a cordova based simple mobile app which displays a map of the entire parking lot with color coded status indicators. It provides an instant update to the driver about the current availablity of free parking slots.
 
